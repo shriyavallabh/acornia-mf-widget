@@ -612,6 +612,10 @@
     <footer class="footer">
         <p>AMFI Registered Mutual Fund Distributor | ARN: 192746</p>
         <p>&copy; 2024 <a href="https://acornf.com/">Acornia Investment Services</a></p>
+        <div id="debugInfo" style="margin-top: 15px; padding: 10px; background: #1a2a3a; border-radius: 5px; text-align: left; font-size: 11px; font-family: monospace;">
+            <strong style="color: #FA981D;">Debug Info:</strong>
+            <span id="debugText" style="color: #aaa;"> Loading...</span>
+        </div>
     </footer>
 
     <script>
@@ -730,40 +734,67 @@
                     loadCRMUsers()
                 ]);
                 populateAmcDropdowns();
+                updateDebugInfo();
                 hideLoading();
                 console.log("All data loaded successfully");
             } catch (error) {
                 console.error("Load error:", error);
+                updateDebugInfo("Error: " + error.message);
                 hideLoading();
+            }
+        }
+
+        function updateDebugInfo(errorMsg) {
+            const debugEl = document.getElementById('debugText');
+            if (errorMsg) {
+                debugEl.textContent = errorMsg;
+                debugEl.style.color = '#dc3545';
+            } else {
+                const investorNames = investors.map(i => i.name).join(', ') || 'None';
+                const userNames = crmUsers.map(u => u.name).join(', ') || 'None';
+                debugEl.innerHTML = `Module: ${CONFIG.modules.investors} | Investors: ${investors.length} (${investorNames}) | Users: ${crmUsers.length} (${userNames})`;
+                debugEl.style.color = '#28a745';
             }
         }
 
         // Load Investors from CRM
         async function loadInvestors() {
             try {
+                console.log(`Loading investors from module: ${CONFIG.modules.investors}`);
+                console.log(`Using field names:`, CONFIG.fields.investor);
+
                 const response = await ZOHO.CRM.API.getRecords({
                     Entity: CONFIG.modules.investors,
                     sort_order: "asc",
                     per_page: 200
                 });
 
+                console.log("getRecords response:", JSON.stringify(response));
+
                 if (response && response.data) {
                     const F = CONFIG.fields.investor;
-                    investors = response.data.map(record => ({
-                        id: record.id,
-                        name: record[F.name] || '',
-                        email: record[F.email] || '',
-                        phone: record[F.phone] || '',
-                        pan: record[F.pan] || '',
-                        kycStatus: record[F.kycStatus] || 'Not Verified',
-                        nse: record[F.nseReg] === true,
-                        bse: record[F.bseReg] === true,
-                        mfu: record[F.mfuReg] === true
-                    }));
-                    console.log(`Loaded ${investors.length} investors`);
+                    investors = response.data.map(record => {
+                        console.log("Processing record:", JSON.stringify(record));
+                        return {
+                            id: record.id,
+                            name: record[F.name] || record.Name || '',
+                            email: record[F.email] || '',
+                            phone: record[F.phone] || '',
+                            pan: record[F.pan] || '',
+                            kycStatus: record[F.kycStatus] || 'Not Verified',
+                            nse: record[F.nseReg] === true,
+                            bse: record[F.bseReg] === true,
+                            mfu: record[F.mfuReg] === true
+                        };
+                    });
+                    console.log(`Loaded ${investors.length} investors:`, investors.map(i => i.name));
+                } else {
+                    console.log("No data in response or response is null");
+                    investors = [];
                 }
             } catch (error) {
                 console.error("Error loading investors:", error);
+                console.error("Error details:", JSON.stringify(error));
                 investors = [];
             }
         }
@@ -771,21 +802,53 @@
         // Load CRM Users for task assignment
         async function loadCRMUsers() {
             try {
-                const response = await ZOHO.CRM.API.getAllUsers({
-                    Type: "ActiveUsers"
-                });
+                console.log("Loading CRM users...");
 
-                if (response && response.users) {
+                // Method 1: Try getAllUsers
+                const response = await ZOHO.CRM.API.getAllUsers({
+                    Type: "AllUsers"
+                });
+                console.log("getAllUsers response:", JSON.stringify(response));
+
+                if (response && response.users && response.users.length > 0) {
                     crmUsers = response.users.map(user => ({
                         id: user.id,
-                        name: user.full_name || user.name,
+                        name: user.full_name || user.name || user.email,
                         email: user.email
                     }));
-                    console.log(`Loaded ${crmUsers.length} users`);
+                    console.log(`Loaded ${crmUsers.length} users from getAllUsers`);
+                } else {
+                    // Method 2: Try getting current user as fallback
+                    console.log("No users from getAllUsers, trying getCurrentUser...");
+                    try {
+                        const currentUser = await ZOHO.CRM.CONFIG.getCurrentUser();
+                        console.log("getCurrentUser response:", JSON.stringify(currentUser));
+                        if (currentUser && currentUser.users && currentUser.users.length > 0) {
+                            crmUsers = currentUser.users.map(user => ({
+                                id: user.id,
+                                name: user.full_name || user.name || "Current User",
+                                email: user.email
+                            }));
+                            console.log(`Loaded current user: ${crmUsers[0].name}`);
+                        }
+                    } catch (e) {
+                        console.error("getCurrentUser error:", e);
+                    }
+                }
+
+                // Fallback: Add placeholder if still no users
+                if (crmUsers.length === 0) {
+                    console.log("No users loaded, adding Ops Team placeholder");
+                    crmUsers = [
+                        { id: "ops_team", name: "Operations Team", email: "" }
+                    ];
                 }
             } catch (error) {
                 console.error("Error loading users:", error);
-                crmUsers = [];
+                // Fallback
+                crmUsers = [
+                    { id: "ops_team", name: "Operations Team", email: "" }
+                ];
             }
         }
 
