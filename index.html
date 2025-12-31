@@ -628,11 +628,12 @@
                 investors: "Investors",
                 transactions: "MF_Transactions"
             },
-            // Field API names
+            // Field API names - Verified from CRM module fields
             fields: {
                 investor: {
                     pan: "PAN_Number",
-                    name: "Investor_Name",  // Custom module primary field: {Singular}_Name
+                    name: "Name",           // System primary field (Investor Name)
+                    fullName: "Full_Name",  // Custom field with clean name
                     email: "Email",
                     phone: "Phone",
                     kycStatus: "KYC_Status",
@@ -775,9 +776,11 @@
                     const F = CONFIG.fields.investor;
                     investors = response.data.map(record => {
                         console.log("Processing record:", JSON.stringify(record));
+                        // Use Full_Name if available (cleaner), fallback to Name (system field)
+                        const displayName = record[F.fullName] || record[F.name] || record.Name || '';
                         return {
                             id: record.id,
-                            name: record[F.name] || record.Name || '',
+                            name: displayName,
                             email: record[F.email] || '',
                             phone: record[F.phone] || '',
                             pan: record[F.pan] || '',
