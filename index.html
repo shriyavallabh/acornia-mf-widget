@@ -675,18 +675,36 @@
         // ========================================
         // ZOHO CRM SDK INITIALIZATION
         // ========================================
+        let sdkInitialized = false;
+
+        // Timeout - if SDK doesn't connect in 10 seconds, show form anyway
+        setTimeout(function() {
+            if (!sdkInitialized) {
+                console.warn("SDK timeout - showing form in demo mode");
+                setLoadingText("Running in demo mode (CRM not connected)");
+                setTimeout(function() {
+                    hideLoading();
+                    populateAmcDropdowns();
+                }, 1000);
+            }
+        }, 10000);
+
         ZOHO.embeddedApp.on("PageLoad", function(data) {
             console.log("CRM Widget loaded", data);
+            sdkInitialized = true;
             setLoadingText("Loading data from CRM...");
             loadAllData();
         });
 
         ZOHO.embeddedApp.init().then(function() {
-            console.log("Zoho CRM SDK initialized");
+            console.log("Zoho CRM SDK initialized successfully");
         }).catch(function(error) {
             console.error("SDK init error:", error);
-            hideLoading();
-            alert("Failed to initialize CRM widget. Please refresh.");
+            setLoadingText("SDK error - showing form in demo mode");
+            setTimeout(function() {
+                hideLoading();
+                populateAmcDropdowns();
+            }, 1000);
         });
 
         function setLoadingText(text) {
