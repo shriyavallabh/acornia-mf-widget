@@ -619,23 +619,23 @@
         // CONFIGURATION - CRM MODULE NAMES
         // ========================================
         const CONFIG = {
-            // CRM Module API names
+            // CRM Module API names (CustomModule1 = Investors, CustomModule2 = MF Transactions)
             modules: {
-                investors: "Investors",
-                transactions: "MF_Transactions"
+                investors: "CustomModule1",
+                transactions: "CustomModule2"
             },
             // Field API names
             fields: {
                 investor: {
                     pan: "PAN_Number",
-                    name: "Full_Name",
+                    name: "Name",  // Organization modules use "Name" as primary field
                     email: "Email",
                     phone: "Phone",
                     kycStatus: "KYC_Status",
                     nseReg: "NSE_Registered",
                     bseReg: "BSE_Registered",
                     mfuReg: "MFU_Registered",
-                    assignedRm: "Assigned_RM"
+                    assignedRm: "Owner"  // Default owner field
                 },
                 transaction: {
                     investor: "Investor",
