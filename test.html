@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Page</title>
+    <style>
+        body { font-family: Arial; padding: 40px; text-align: center; }
+        h1 { color: #2563eb; }
+        .box { background: #f0f9ff; padding: 20px; border-radius: 10px; margin: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Widget Test Page</h1>
+    <div class="box">
+        <p>If you can see this, the external hosting is working!</p>
+        <p>Time: <span id="time"></span></p>
+    </div>
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
