@@ -582,6 +582,26 @@
                     <span class="section-number">3</span>
                     <h2 class="section-title">Task Assignment</h2>
                 </div>
+
+                <!-- Operation Staff Assignment -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Assign to Operations Staff <span class="required">*</span></label>
+                        <select id="assignedOps">
+                            <option value="">-- Select Ops Staff --</option>
+                        </select>
+                        <span class="helper-text">Select the operations team member to handle this request</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="priority">
+                            <option value="Normal">Normal</option>
+                            <option value="High">High</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="task-list" id="tasksList">
                     <div class="empty-tasks">Select an investor and add transactions to see tasks</div>
                 </div>
@@ -688,8 +708,18 @@
                 console.warn("SDK timeout - showing form in demo mode");
                 setLoadingText("Running in demo mode (CRM not connected)");
                 setTimeout(function() {
+                    // Populate demo data for testing
+                    investors = [
+                        { id: 'demo1', name: 'Rahul Sharma (Demo)', email: 'rahul@demo.com', phone: '9876543210', pan: 'ABCDE1234F', kycStatus: 'Verified', nse: true, bse: true, mfu: false },
+                        { id: 'demo2', name: 'Priya Patel (Demo)', email: 'priya@demo.com', phone: '9876543211', pan: 'FGHIJ5678K', kycStatus: 'Pending', nse: true, bse: false, mfu: true },
+                        { id: 'demo3', name: 'Amit Kumar (Demo)', email: 'amit@demo.com', phone: '9876543212', pan: 'LMNOP9012Q', kycStatus: 'Verified', nse: false, bse: true, mfu: true }
+                    ];
+                    console.log("Demo investors loaded:", investors.length);
+
                     hideLoading();
                     populateAmcDropdowns();
+                    populateOpsDropdown();
+                    updateDebugInfo("Demo mode - CRM SDK not connected. Using demo data.");
                 }, 1000);
             }
         }, 10000);
@@ -707,8 +737,18 @@
             console.error("SDK init error:", error);
             setLoadingText("SDK error - showing form in demo mode");
             setTimeout(function() {
+                // Populate demo data for testing
+                investors = [
+                    { id: 'demo1', name: 'Rahul Sharma (Demo)', email: 'rahul@demo.com', phone: '9876543210', pan: 'ABCDE1234F', kycStatus: 'Verified', nse: true, bse: true, mfu: false },
+                    { id: 'demo2', name: 'Priya Patel (Demo)', email: 'priya@demo.com', phone: '9876543211', pan: 'FGHIJ5678K', kycStatus: 'Pending', nse: true, bse: false, mfu: true },
+                    { id: 'demo3', name: 'Amit Kumar (Demo)', email: 'amit@demo.com', phone: '9876543212', pan: 'LMNOP9012Q', kycStatus: 'Verified', nse: false, bse: true, mfu: true }
+                ];
+                console.log("Demo investors loaded:", investors.length);
+
                 hideLoading();
                 populateAmcDropdowns();
+                populateOpsDropdown();
+                updateDebugInfo("Demo mode - SDK error: " + (error.message || error));
             }, 1000);
         });
 
@@ -735,6 +775,7 @@
                     loadCRMUsers()
                 ]);
                 populateAmcDropdowns();
+                populateOpsDropdown();
                 updateDebugInfo();
                 hideLoading();
                 console.log("All data loaded successfully");
@@ -863,6 +904,26 @@
                     select.innerHTML += `<option value="${amc}">${amc}</option>`;
                 });
             });
+        }
+
+        // Populate Operations Staff dropdown
+        function populateOpsDropdown() {
+            const opsSelect = document.getElementById('assignedOps');
+            if (opsSelect) {
+                opsSelect.innerHTML = '<option value="">-- Select Ops Staff --</option>';
+
+                // Use CRM users if available, otherwise show demo users
+                const usersToShow = crmUsers.length > 0 ? crmUsers : [
+                    { id: 'demo1', name: 'Ops User 1 (Demo)' },
+                    { id: 'demo2', name: 'Ops User 2 (Demo)' },
+                    { id: 'demo3', name: 'Ops User 3 (Demo)' }
+                ];
+
+                usersToShow.forEach(user => {
+                    opsSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+                });
+                console.log(`Populated Ops dropdown with ${usersToShow.length} users (CRM: ${crmUsers.length})`);
+            }
         }
 
         // ========================================
